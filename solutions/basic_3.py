@@ -34,6 +34,21 @@ def read_and_generate_strings(filename):
 
         return strings
 
+def sequence_alignment(str_1, str_2, gap_penalty, mismatch_cost):
+    m = len(str_1)
+    n = len(str_2)
+    DP = [[0] * m] * n
+    for i in range(m):
+        DP[0][i] = i*gap_penalty
+    for j in range(n):
+        DP[j][0] = j*gap_penalty
+    for i in range(1, m):
+        for j in range(1, n):
+            DP[i][j] = min( mismatch_cost[str_1[i]][str_2[j]] + DP[i-1][j-1],
+                           gap_penalty + DP[i-1][j],
+                           gap_penalty + DP[i][j-1])
+    return DP[m-1][n-1]
+
 if __name__ == "__main__":
     input_file = sys.argv[1]
     output_file = sys.argv[2]
@@ -44,3 +59,13 @@ if __name__ == "__main__":
     if str_1 and str_2:
         print("Generated String 1:", str_1)
         print("Generated String 2:", str_2)
+
+    gap_penalty = 30
+    mismatch_cost = {
+        'A': {'A': 0, 'C': 110, 'G': 48, 'T': 94},
+        'C': {'A': 110, 'C': 0, 'G': 118, 'T': 48},
+        'G': {'A': 48, 'C': 118, 'G': 0, 'T': 110},
+        'T': {'A': 94, 'C': 48, 'G': 110, 'T': 0}
+    }
+    cost = sequence_alignment(str_1, str_2, gap_penalty, mismatch_cost)
+    print(cost)
