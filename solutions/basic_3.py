@@ -48,7 +48,61 @@ def sequence_alignment(str_1, str_2, gap_penalty, mismatch_cost):
             DP[i,j] = min(mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1,j-1],
                            gap_penalty + DP[i-1,j],
                            gap_penalty + DP[i,j-1])
-    return DP[m,n]
+    return DP, DP[m,n]
+
+def top_down_pass(DP, str_1, str_2):
+    aligned_str_1 = ""
+    aligned_str_2 = ""
+    m = len(str_1)
+    n = len(str_2)
+    i, j = m, n
+
+    # Go through the constructed DP table to get the accurate string alignments
+    while i!=0 and j!=0:
+        mismatch = mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1,j-1]
+        skip_str_1 = gap_penalty + DP[i-1,j]
+        skip_str_2 = gap_penalty + DP[i,j-1]
+        min_index = np.argmin(np.array([mismatch, skip_str_1, skip_str_2]))
+
+        if min_index == 0:
+            aligned_str_1 += str_1[i-1]
+            aligned_str_2 += str_2[j-1]
+            i = i-1
+            j = j-1
+        elif min_index == 1:
+            aligned_str_1 += str_1[i-1]
+            aligned_str_2 += "_"
+            i = i-1
+        else:
+            aligned_str_1 += "_"
+            aligned_str_2 += str_2[j-1]
+            j = j-1
+
+    # We need to align the strings with "_" once only one string has been fully consumed
+    while i > 0:
+        aligned_str_1 += str_1[i-1]
+        aligned_str_2 += "_"
+        i = i-1
+    while j > 0:
+        aligned_str_1 += "_"
+        aligned_str_2 += str_2[j-1]
+        j = j-1
+
+    # Reverse the strings and return them
+    return aligned_str_1[::-1], aligned_str_2[::-1]
+
+def get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost):
+    # This function will compute the alignment cost between the given aligned strings
+    m = len(aligned_str_1)
+    if len(aligned_str_2) != m:
+        return -1
+    cost = 0.
+    for i in range(m):
+        if aligned_str_1[i] == "_" or aligned_str_2[i] == "_":
+            cost += gap_penalty
+        else:
+            cost += mismatch_cost[aligned_str_1[i]][aligned_str_2[i]]
+    return cost
 
 if __name__ == "__main__":
     input_file = sys.argv[1]
@@ -68,5 +122,10 @@ if __name__ == "__main__":
         'G': {'A': 48, 'C': 118, 'G': 0, 'T': 110},
         'T': {'A': 94, 'C': 48, 'G': 110, 'T': 0}
     }
-    cost = sequence_alignment(str_1, str_2, gap_penalty, mismatch_cost)
+    DP, cost = sequence_alignment(str_1, str_2, gap_penalty, mismatch_cost)
     print(cost)
+
+    aligned_str_1, aligned_str_2 = top_down_pass(DP, str_1, str_2)
+    print(aligned_str_1)
+    print(aligned_str_2)
+    print("Our returned alignment is:", "valid" if get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost) == cost else "invalid")
