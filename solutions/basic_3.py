@@ -1,5 +1,8 @@
 import sys
+import time
+import psutil
 import numpy as np
+
 
 def generate_string(base_string, indices):
     current_string = base_string
@@ -104,16 +107,24 @@ def get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost)
             cost += mismatch_cost[aligned_str_1[i]][aligned_str_2[i]]
     return cost
 
+def process_memory():
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    memory_consumed = int(memory_info.rss / 1024)  # memory in KB
+    return memory_consumed
+
+def time_wrapper(function, *args, **kwargs):
+    start_time = time.time()
+    result = function(*args, **kwargs)
+    end_time = time.time()
+    time_taken = (end_time - start_time) * 1000  # time in milliseconds
+    return result, time_taken
+
 if __name__ == "__main__":
-    input_file = sys.argv[1]
-    output_file = sys.argv[2]
+    input_file_path = sys.argv[1]
+    output_file_path = sys.argv[2]
     
-    str_1, str_2 = read_and_generate_strings(input_file)
-    
-    # print strings for testing (delete before submission)
-    # if str_1 and str_2:
-    #     print("Generated String 1:", str_1)
-    #     print("Generated String 2:", str_2)
+    str_1, str_2 = read_and_generate_strings(input_file_path)
 
     gap_penalty = 30
     mismatch_cost = {
@@ -122,10 +133,22 @@ if __name__ == "__main__":
         'G': {'A': 48, 'C': 118, 'G': 0, 'T': 110},
         'T': {'A': 94, 'C': 48, 'G': 110, 'T': 0}
     }
-    DP, cost = sequence_alignment(str_1, str_2, gap_penalty, mismatch_cost)
-    print(cost)
+    
+    memory_before = process_memory()
+    (DP, cost), time_taken = time_wrapper(sequence_alignment, str_1, str_2, gap_penalty, mismatch_cost)
+    # print(cost)
 
     aligned_str_1, aligned_str_2 = top_down_pass(DP, str_1, str_2)
-    print(aligned_str_1)
-    print(aligned_str_2)
-    print("Our returned alignment is:", "valid" if get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost) == cost else "invalid")
+    memory_after = process_memory()
+    memory_used = memory_after - memory_before
+    # print(aligned_str_1)
+    # print(aligned_str_2)
+    # print("Our returned alignment is:", "valid" if get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost) == cost else "invalid")
+    
+    # write to output file
+    with open(output_file_path, 'w') as file:
+        file.write(f"{int(cost)}\n")
+        file.write(f"{aligned_str_1}\n")
+        file.write(f"{aligned_str_2}\n")
+        file.write(f"{time_taken}\n")
+        file.write(f"{memory_used}")
