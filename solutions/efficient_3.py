@@ -179,16 +179,10 @@ if __name__ == "__main__":
 
     memory_after = process_memory()
     memory_used = memory_after - memory_before
-
-    print(cost)
-    print(aligned_str_1)
-    print(aligned_str_2)
-    print(time_taken)
-    print(memory_used)
     
-    # with open(output_file_path, 'w') as file:
-    #     file.write(f"{int(cost)}\n")
-    #     file.write(f"{aligned_str_1}\n")
-    #     file.write(f"{aligned_str_2}\n")
-    #     file.write(f"{time_taken}\n")
-    #     file.write(f"{memory_used}")
+    with open(output_file_path, 'w') as file:
+         file.write(f"{int(cost)}\n")
+         file.write(f"{aligned_str_1}\n")
+         file.write(f"{aligned_str_2}\n")
+         file.write(f"{time_taken}\n")
+         file.write(f"{memory_used}")

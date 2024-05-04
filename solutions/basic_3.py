@@ -136,16 +136,11 @@ if __name__ == "__main__":
     
     memory_before = process_memory()
     (DP, cost), time_taken = time_wrapper(sequence_alignment, str_1, str_2, gap_penalty, mismatch_cost)
-    # print(cost)
 
     aligned_str_1, aligned_str_2 = top_down_pass(DP, str_1, str_2)
     memory_after = process_memory()
     memory_used = memory_after - memory_before
-    # print(aligned_str_1)
-    # print(aligned_str_2)
-    # print("Our returned alignment is:", "valid" if get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost) == cost else "invalid")
     
-    # write to output file
     with open(output_file_path, 'w') as file:
         file.write(f"{int(cost)}\n")
         file.write(f"{aligned_str_1}\n")
