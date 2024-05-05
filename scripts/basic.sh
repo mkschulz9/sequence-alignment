@@ -28,6 +28,7 @@ function check_and_install {
 # Check and install necessary packages
 check_and_install "numpy"
 check_and_install "psutil"
+check_and_install "memory_profiler"
 
 # run the basic program
 python ./solutions/basic_3.py $INPUT_FILE $OUTPUT_FILE
