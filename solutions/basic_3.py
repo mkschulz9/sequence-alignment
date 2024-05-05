@@ -152,7 +152,7 @@ if __name__ == "__main__":
         file.write(f"{memory_used}")
         
     # collect data for generating graphs & write data to file
-    
+    '''
     import os
     
     directory = 'datapoints'
@@ -179,4 +179,4 @@ if __name__ == "__main__":
         
         file.write(time_results_output)
         file.write(memory_resuls_output)
-    
+    '''
