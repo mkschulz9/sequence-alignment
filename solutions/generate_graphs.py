@@ -1,4 +1,4 @@
-import matplotlib
+import matplotlib # install manually if not installed already
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
