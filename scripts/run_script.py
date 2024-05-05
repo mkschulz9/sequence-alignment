@@ -1,6 +1,5 @@
 # system independent script to run a Python script using a virtual environment. 
 # The script creates a virtual environment if it doesn't exist, installs required packages, and runs the specified Python script using the Python executable in the virtual environment. The script takes the version of the solution, input file, and output file as command-line arguments.
-
 import subprocess
 import sys
 import os
@@ -32,8 +31,8 @@ def main():
     env_path = "./.venv"
     solution_version = sys.argv[1] if len(sys.argv) > 0 else 'basic'
     script_to_run = f"solutions/{solution_version}_3.py"
-    input_file = sys.argv[2] if len(sys.argv) > 1 else 'input.txt'
-    output_file = sys.argv[3] if len(sys.argv) > 2 else 'output.txt'
+    input_file = sys.argv[2] if len(sys.argv) > 1 else './sample-tests/input1.txt'
+    output_file = sys.argv[3] if len(sys.argv) > 2 else 'output_basic.txt'
 
     # Create virtual environment
     create_virtualenv(env_path)

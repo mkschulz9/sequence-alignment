@@ -192,6 +192,7 @@ if __name__ == "__main__":
          file.write(f"{memory_used}")
          
     # collect data for generating graphs & write data to file
+    
     import os 
     
     directory = 'datapoints'
@@ -209,7 +210,6 @@ if __name__ == "__main__":
         
         time_results.append(time_taken)
         memory_results.append(memory_used)
-        break
     
     with open('graph_data_efficient.txt', 'w') as file:
         # create two sets of tuples; one for (problem_size, time_taken) and one for (problem_size, memory_used)
@@ -218,3 +218,4 @@ if __name__ == "__main__":
         
         file.write(time_results_output)
         file.write(memory_resuls_output)
+    

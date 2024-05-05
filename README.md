@@ -23,7 +23,7 @@
 
         (**Note**: The solutions are written as standalone files as per the project requirements, so redundant code is present in both files.)
     - `scripts/`: Contains the script to run the solutions. 
-        - `run_script.py`: A script to run the solutions independently of the environment.
+        - `run_script.py`: A script to run the solutions independent of the environment.
 
         (**Note**: Disregard `basic.sh` and `efficient.sh` as they are only needed for project grading purposes.)
     - `datapoints/`: Contains sample inputs used by the solutions to collect time and memory data for generating graphs.
