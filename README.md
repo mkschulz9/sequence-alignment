@@ -19,7 +19,7 @@
     - `solutions/`: Contains the code for the basic and efficient solutions, as well as a file for generating graphs used in analysis.
         - `basic_3.py`: Contains the code for the basic solution.
         - `efficient_3.py`: Contains the code for the memory efficient solution.
-        - `generate_graphs.py`: Contains the code to generate graphs for time and memory analysis of the solutions. Data is colected during execution of the solutions using the input data provided in the `datapoints` folder. (If you want to collect the data again, you will need to uncomment the code at the end of each solution file before running.)
+        - `generate_graphs.py`: Contains the code to generate graphs for time and memory analysis of the solutions. Data is collected during execution of the solutions using the input data provided in the `datapoints` folder. (If you want to collect the data again, you will need to uncomment the code at the end of each solution file before running.)
 
         (**Note**: The solutions are written as standalone files as per the project requirements, so redundant code is present in both files.)
     - `scripts/`: Contains the script to run the solutions. 
