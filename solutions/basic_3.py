@@ -1,9 +1,20 @@
 import sys
 import time
 import psutil
-import numpy as np
 
 memory_history = []
+
+def argmin(a):
+    return min(range(len(a)), key=lambda x : a[x])
+
+def zeros(m, n):
+    DP = []
+    for i in range(m + 1):
+        row = []
+        for j in range(n + 1):
+            row.append(0.)
+        DP.append(row)
+    return DP
 
 def generate_string(base_string, indices):
     current_string = base_string
@@ -42,22 +53,22 @@ def read_and_generate_strings(filename):
 def sequence_alignment(str_1, str_2, gap_penalty, mismatch_cost):
     m = len(str_1)
     n = len(str_2)
-    DP = np.zeros((m+1,n+1))
-    update_memory()
+
+    DP = zeros(m+1, n+1)
     
     for i in range(m+1):
-        DP[i,0] = i*gap_penalty
+        DP[i][0] = i*gap_penalty
         update_memory()
     for j in range(n+1):
-        DP[0,j] = j*gap_penalty
+        DP[0][j] = j*gap_penalty
         update_memory()
     for i in range(1, m+1):
         for j in range(1, n+1):
-            DP[i,j] = min(mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1,j-1],
-                           gap_penalty + DP[i-1,j],
-                           gap_penalty + DP[i,j-1])
+            DP[i][j] = min(mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1][j-1],
+                           gap_penalty + DP[i-1][j],
+                           gap_penalty + DP[i][j-1])
         update_memory()
-    return DP, DP[m,n]
+    return DP, DP[m][n]
 
 def top_down_pass(DP, str_1, str_2):
     aligned_str_1 = ""
@@ -68,10 +79,10 @@ def top_down_pass(DP, str_1, str_2):
 
     # Go through the constructed DP table to get the accurate string alignments
     while i!=0 and j!=0:
-        mismatch = mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1,j-1]
-        skip_str_1 = gap_penalty + DP[i-1,j]
-        skip_str_2 = gap_penalty + DP[i,j-1]
-        min_index = np.argmin(np.array([mismatch, skip_str_1, skip_str_2]))
+        mismatch = mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1][j-1]
+        skip_str_1 = gap_penalty + DP[i-1][j]
+        skip_str_2 = gap_penalty + DP[i][j-1]
+        min_index = argmin([mismatch, skip_str_1, skip_str_2])
 
         if min_index == 0:
             aligned_str_1 += str_1[i-1]

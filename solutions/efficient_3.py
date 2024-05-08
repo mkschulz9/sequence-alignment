@@ -1,9 +1,21 @@
 import sys
 import time
 import psutil
-import numpy as np
+import copy
 
 memory_history = []
+
+def argmin(a):
+    return min(range(len(a)), key=lambda x : a[x])
+
+def zeros(m, n):
+    DP = []
+    for i in range(m + 1):
+        row = []
+        for j in range(n + 1):
+            row.append(0.)
+        DP.append(row)
+    return DP
 
 def generate_string(base_string, indices):
     current_string = base_string
@@ -46,10 +58,10 @@ def top_down_pass(DP, str_1, str_2):
     n = len(str_2)
     i, j = m, n
     while i != 0 and j != 0:
-        mismatch = mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1, j-1]
-        skip_str_1 = gap_penalty + DP[i-1, j]
-        skip_str_2 = gap_penalty + DP[i, j-1]
-        min_index = np.argmin(np.array([mismatch, skip_str_1, skip_str_2]))
+        mismatch = mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1][j-1]
+        skip_str_1 = gap_penalty + DP[i-1][j]
+        skip_str_2 = gap_penalty + DP[i][j-1]
+        min_index = argmin([mismatch, skip_str_1, skip_str_2])
 
         if min_index == 0:
             aligned_str_1 += str_1[i-1]
@@ -83,30 +95,30 @@ def top_down_pass(DP, str_1, str_2):
 def sequence_alignment_basic(str_1, str_2, gap_penalty, mismatch_cost):
     m = len(str_1)
     n = len(str_2)
-    DP = np.zeros((m+1, n+1))
+    DP = zeros(m+1, n+1)
     update_memory()
     
     for i in range(m+1):
-        DP[i, 0] = i * gap_penalty
+        DP[i][0] = i * gap_penalty
         update_memory()
     for j in range(n+1):
-        DP[0, j] = j * gap_penalty
+        DP[0][j] = j * gap_penalty
         update_memory()
     for i in range(1, m+1):
         for j in range(1, n+1):
-            DP[i, j] = min(
-                mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1, j-1],
-                gap_penalty + DP[i-1, j],
-                gap_penalty + DP[i, j-1]
+            DP[i][j] = min(
+                mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1][j-1],
+                gap_penalty + DP[i-1][j],
+                gap_penalty + DP[i][j-1]
             )
         update_memory()
-    return DP, DP[m, n]
+    return DP, DP[m][n]
 
 def build_table(X, Y, gap_penalty, mismatch_cost):
     m = len(X)
     n = len(Y)
-    DP_old = np.zeros(n+1)
-    DP_cur = np.zeros(n+1)
+    DP_old = [0]*(n+1) 
+    DP_cur = [0]*(n+1)
 
     for i in range(1, n+1):
         DP_old[i] = i * gap_penalty
@@ -122,7 +134,7 @@ def build_table(X, Y, gap_penalty, mismatch_cost):
                 gap_penalty + DP_cur[j-1]
             )
         update_memory()
-        DP_old = np.copy(DP_cur)
+        DP_old = copy.deepcopy(DP_cur)
         update_memory()
     
     return DP_cur
@@ -209,41 +221,47 @@ if __name__ == "__main__":
     peak_memory_usage = max(memory_history) - memory_before
     reset_memory() 
     
-    with open(output_file_path, 'w') as file:
-         file.write(f"{int(cost)}\n")
-         file.write(f"{aligned_str_1}\n")
-         file.write(f"{aligned_str_2}\n")
-         file.write(f"{time_taken}\n")
-         file.write(f"{peak_memory_usage}")
+    print(f"{int(cost)}\n")
+    print(f"{aligned_str_1}\n")
+    print(f"{aligned_str_2}\n")
+    print(f"{time_taken}\n")
+    print(f"{peak_memory_usage}")
+
+    # with open(output_file_path, 'w') as file:
+    #      file.write(f"{int(cost)}\n")
+    #      file.write(f"{aligned_str_1}\n")
+    #      file.write(f"{aligned_str_2}\n")
+    #      file.write(f"{time_taken}\n")
+    #      file.write(f"{peak_memory_usage}")
          
-    # collect data for generating graphs & write data to file
-    import os 
+    # # collect data for generating graphs & write data to file
+    # import os 
     
-    directory = 'datapoints'
-    time_results = []
-    memory_results = []
-    problem_sizes = []
+    # directory = 'datapoints'
+    # time_results = []
+    # memory_results = []
+    # problem_sizes = []
     
-    for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
-        str_1, str_2 = read_and_generate_strings(file_path)
-        problem_size = len(str_1) + len(str_2)
-        problem_sizes.append(problem_size) 
+    # for filename in os.listdir(directory):
+    #     file_path = os.path.join(directory, filename)
+    #     str_1, str_2 = read_and_generate_strings(file_path)
+    #     problem_size = len(str_1) + len(str_2)
+    #     problem_sizes.append(problem_size) 
         
-        memory_before = process_memory()
-        memory_history.append(memory_before)
-        (cost, aligned_str_1, aligned_str_2), time_taken = time_wrapper(divide_and_conquer, str_1, str_2, gap_penalty, mismatch_cost)
+    #     memory_before = process_memory()
+    #     memory_history.append(memory_before)
+    #     (cost, aligned_str_1, aligned_str_2), time_taken = time_wrapper(divide_and_conquer, str_1, str_2, gap_penalty, mismatch_cost)
         
-        peak_memory_usage = max(memory_history) - memory_before
-        reset_memory() 
+    #     peak_memory_usage = max(memory_history) - memory_before
+    #     reset_memory() 
         
-        time_results.append(time_taken)
-        memory_results.append(peak_memory_usage)
+    #     time_results.append(time_taken)
+    #     memory_results.append(peak_memory_usage)
     
-    with open('graph_data_efficient.txt', 'w') as file:
-        # create two sets of tuples; one for (problem_size, time_taken) and one for (problem_size, memory_used)
-        time_results_output = ', '.join(f"({problem_sizes[i]}, {time_results[i]})" for i in range(len(problem_sizes))) + '\n'
-        memory_results_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
+    # with open('graph_data_efficient.txt', 'w') as file:
+    #     # create two sets of tuples; one for (problem_size, time_taken) and one for (problem_size, memory_used)
+    #     time_results_output = ', '.join(f"({problem_sizes[i]}, {time_results[i]})" for i in range(len(problem_sizes))) + '\n'
+    #     memory_results_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
         
-        file.write(time_results_output)
-        file.write(memory_results_output)
+    #     file.write(time_results_output)
+    #     file.write(memory_results_output)
