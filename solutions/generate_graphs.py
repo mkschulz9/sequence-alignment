@@ -1,7 +1,6 @@
 import matplotlib # install manually if not installed already
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
 from pathlib import Path
 
 def read_data(filepath):

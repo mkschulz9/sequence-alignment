@@ -1,7 +1,9 @@
 import sys
 import time
+import psutil
 import numpy as np
-from memory_profiler import memory_usage
+
+memory_history = []
 
 def generate_string(base_string, indices):
     current_string = base_string
@@ -41,15 +43,20 @@ def sequence_alignment(str_1, str_2, gap_penalty, mismatch_cost):
     m = len(str_1)
     n = len(str_2)
     DP = np.zeros((m+1,n+1))
+    update_memory()
+    
     for i in range(m+1):
         DP[i,0] = i*gap_penalty
+        update_memory()
     for j in range(n+1):
         DP[0,j] = j*gap_penalty
+        update_memory()
     for i in range(1, m+1):
         for j in range(1, n+1):
             DP[i,j] = min(mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1,j-1],
                            gap_penalty + DP[i-1,j],
                            gap_penalty + DP[i,j-1])
+        update_memory()
     return DP, DP[m,n]
 
 def top_down_pass(DP, str_1, str_2):
@@ -79,16 +86,20 @@ def top_down_pass(DP, str_1, str_2):
             aligned_str_1 += "_"
             aligned_str_2 += str_2[j-1]
             j = j-1
+            
+        update_memory()
 
     # We need to align the strings with "_" once only one string has been fully consumed
     while i > 0:
         aligned_str_1 += str_1[i-1]
         aligned_str_2 += "_"
         i = i-1
+        update_memory()
     while j > 0:
         aligned_str_1 += "_"
         aligned_str_2 += str_2[j-1]
         j = j-1
+        update_memory()
 
     # Reverse the strings and return them
     return aligned_str_1[::-1], aligned_str_2[::-1]
@@ -106,26 +117,26 @@ def get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost)
             cost += mismatch_cost[aligned_str_1[i]][aligned_str_2[i]]
     return cost
 
-def time_memory_wrapper(function, *args, **kwargs):
-    def execute_function():
-        start_time = time.time()
-        result = function(*args, **kwargs)
-        end_time = time.time()
-        time_taken = (end_time - start_time) * 1000
-        return (result, time_taken)
-    
-    memory_data = memory_usage(
-        execute_function, 
-        interval=0.1, 
-        include_children=True, 
-        retval=True,
-        max_usage=True  # tracks peak memory usage instead of collecting samples
-    )
+def process_memory():
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    memory_consumed = int(memory_info.rss / 1024)  # memory in KB
+    return memory_consumed
 
-    # returns a tuple: peak memory usage, (function_result, time_taken)
-    peak_memory_usage, (function_result, time_taken) = memory_data
+def time_wrapper(function, *args, **kwargs):
+    start_time = time.time()
+    result = function(*args, **kwargs)
+    end_time = time.time()
+    time_taken = (end_time - start_time) * 1000  # time in milliseconds
+    return result, time_taken 
+
+def reset_memory():
+    global memory_history
+    memory_history = []
     
-    return function_result, time_taken, (peak_memory_usage*1024)
+def update_memory():
+    global memory_history
+    memory_history.append(process_memory())
 
 if __name__ == "__main__":
     input_file_path = sys.argv[1]
@@ -141,20 +152,23 @@ if __name__ == "__main__":
         'T': {'A': 94, 'C': 48, 'G': 110, 'T': 0}
     }
     
-    (DP, cost), time_taken, memory_used = time_memory_wrapper(sequence_alignment, str_1, str_2, gap_penalty, mismatch_cost)
+    memory_before = process_memory()
+    memory_history.append(memory_before)
+    (DP, cost), time_taken = time_wrapper(sequence_alignment, str_1, str_2, gap_penalty, mismatch_cost)
     aligned_str_1, aligned_str_2 = top_down_pass(DP, str_1, str_2)
+    
+    peak_memory_usage = max(memory_history) - memory_before
+    reset_memory() 
     
     with open(output_file_path, 'w') as file:
         file.write(f"{int(cost)}\n")
         file.write(f"{aligned_str_1}\n")
         file.write(f"{aligned_str_2}\n")
         file.write(f"{time_taken}\n")
-        file.write(f"{memory_used}")
-        
+        file.write(f"{peak_memory_usage}")
+
     # collect data for generating graphs & write data to file
-    '''
     import os
-    
     directory = 'datapoints'
     time_results = []
     memory_results = []
@@ -165,18 +179,22 @@ if __name__ == "__main__":
         str_1, str_2 = read_and_generate_strings(file_path)
         problem_size = len(str_1) + len(str_2)
         problem_sizes.append(problem_size) 
-        
-        (DP, cost), time_taken, memory_used = time_memory_wrapper(sequence_alignment, str_1, str_2, gap_penalty, mismatch_cost)
+
+        memory_before = process_memory()
+        memory_history.append(memory_before)
+        (DP, cost), time_taken = time_wrapper(sequence_alignment, str_1, str_2, gap_penalty, mismatch_cost)        
         aligned_str_1, aligned_str_2 = top_down_pass(DP, str_1, str_2)
         
+        peak_memory_usage = max(memory_history) - memory_before
+        reset_memory() 
+        
         time_results.append(time_taken)
-        memory_results.append(memory_used)
+        memory_results.append(peak_memory_usage)
     
     with open('graph_data_basic.txt', 'w') as file:
         # create two sets of tuples; one for (problem_size, time_taken) and one for (problem_size, memory_used)
         time_results_output = ', '.join(f"({problem_sizes[i]}, {time_results[i]})" for i in range(len(problem_sizes))) + '\n'
-        memory_resuls_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
+        memory_results_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
         
         file.write(time_results_output)
-        file.write(memory_resuls_output)
-    '''
+        file.write(memory_results_output)

@@ -1,7 +1,9 @@
 import sys
 import time
+import psutil
 import numpy as np
-from memory_profiler import memory_usage
+
+memory_history = []
 
 def generate_string(base_string, indices):
     current_string = base_string
@@ -43,75 +45,86 @@ def top_down_pass(DP, str_1, str_2):
     m = len(str_1)
     n = len(str_2)
     i, j = m, n
-
-    # Go through the constructed DP table to get the accurate string alignments
-    while i!=0 and j!=0:
-        mismatch = mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1,j-1]
-        skip_str_1 = gap_penalty + DP[i-1,j]
-        skip_str_2 = gap_penalty + DP[i,j-1]
+    while i != 0 and j != 0:
+        mismatch = mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1, j-1]
+        skip_str_1 = gap_penalty + DP[i-1, j]
+        skip_str_2 = gap_penalty + DP[i, j-1]
         min_index = np.argmin(np.array([mismatch, skip_str_1, skip_str_2]))
 
         if min_index == 0:
             aligned_str_1 += str_1[i-1]
             aligned_str_2 += str_2[j-1]
-            i = i-1
-            j = j-1
+            i -= 1
+            j -= 1
         elif min_index == 1:
             aligned_str_1 += str_1[i-1]
             aligned_str_2 += "_"
-            i = i-1
+            i -= 1
         else:
             aligned_str_1 += "_"
             aligned_str_2 += str_2[j-1]
-            j = j-1
+            j -= 1
+            
+        update_memory()
 
-    # We need to align the strings with "_" once only one string has been fully consumed
     while i > 0:
         aligned_str_1 += str_1[i-1]
         aligned_str_2 += "_"
-        i = i-1
+        i -= 1
+        update_memory()
     while j > 0:
         aligned_str_1 += "_"
         aligned_str_2 += str_2[j-1]
-        j = j-1
+        j -= 1
+        update_memory()
 
-    # Reverse the strings and return them
     return aligned_str_1[::-1], aligned_str_2[::-1]
 
 def sequence_alignment_basic(str_1, str_2, gap_penalty, mismatch_cost):
     m = len(str_1)
     n = len(str_2)
-    DP = np.zeros((m+1,n+1))
+    DP = np.zeros((m+1, n+1))
+    update_memory()
+    
     for i in range(m+1):
-        DP[i,0] = i*gap_penalty
+        DP[i, 0] = i * gap_penalty
+        update_memory()
     for j in range(n+1):
-        DP[0,j] = j*gap_penalty
+        DP[0, j] = j * gap_penalty
+        update_memory()
     for i in range(1, m+1):
         for j in range(1, n+1):
-            DP[i,j] = min(mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1,j-1],
-                           gap_penalty + DP[i-1,j],
-                           gap_penalty + DP[i,j-1])
-    return DP, DP[m,n]
+            DP[i, j] = min(
+                mismatch_cost[str_1[i-1]][str_2[j-1]] + DP[i-1, j-1],
+                gap_penalty + DP[i-1, j],
+                gap_penalty + DP[i, j-1]
+            )
+        update_memory()
+    return DP, DP[m, n]
 
 def build_table(X, Y, gap_penalty, mismatch_cost):
-
     m = len(X)
     n = len(Y)
     DP_old = np.zeros(n+1)
     DP_cur = np.zeros(n+1)
 
     for i in range(1, n+1):
-        DP_old[i] = i*gap_penalty
+        DP_old[i] = i * gap_penalty
+    update_memory()
     
     for i in range(1, m+1):
-        DP_cur[0] = gap_penalty*i
+        DP_cur[0] = i * gap_penalty
+        update_memory()
         for j in range(1, n+1):
-            DP_cur[j] = min(mismatch_cost[X[i-1]][Y[j-1]] + DP_old[j-1],
-                            gap_penalty + DP_old[j],
-                            gap_penalty + DP_cur[j-1])
-            
-        DP_old=np.copy(DP_cur)
-            
+            DP_cur[j] = min(
+                mismatch_cost[X[i-1]][Y[j-1]] + DP_old[j-1],
+                gap_penalty + DP_old[j],
+                gap_penalty + DP_cur[j-1]
+            )
+        update_memory()
+        DP_old = np.copy(DP_cur)
+        update_memory()
+    
     return DP_cur
 
 def divide_and_conquer(X, Y, gap_penalty, mismatch_cost):
@@ -120,18 +133,25 @@ def divide_and_conquer(X, Y, gap_penalty, mismatch_cost):
     if m < 2 or n < 2:
         DP, cost = sequence_alignment_basic(X, Y, gap_penalty, mismatch_cost)
         X_edit, Y_edit = top_down_pass(DP, X, Y)
+        update_memory()
         return cost, X_edit, Y_edit
 
     cost_xl = build_table(X[:m//2], Y, gap_penalty, mismatch_cost)
     cost_xr = build_table(X[m//2:][::-1], Y[::-1], gap_penalty, mismatch_cost)
 
+    update_memory()
+    
     places_to_cut = [cost_xl[j] + cost_xr[n - j] for j in range(n + 1)]
     min_cost = min(places_to_cut)
     c = places_to_cut.index(min_cost)
 
+    update_memory()
+    
     cost_l, x_l, y_l = divide_and_conquer(X[:m//2], Y[:c], gap_penalty, mismatch_cost)
     cost_r, x_r, y_r = divide_and_conquer(X[m//2:], Y[c:], gap_penalty, mismatch_cost)
 
+    update_memory()
+    
     return (cost_l+cost_r, x_l+x_r, y_l+y_r)
 
 def get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost):
@@ -147,26 +167,26 @@ def get_alignment_cost(aligned_str_1, aligned_str_2, gap_penalty, mismatch_cost)
             cost += mismatch_cost[aligned_str_1[i]][aligned_str_2[i]]
     return cost
 
-def time_memory_wrapper(function, *args, **kwargs):
-    def execute_function():
-        start_time = time.time()
-        result = function(*args, **kwargs)
-        end_time = time.time()
-        time_taken = (end_time - start_time) * 1000
-        return (result, time_taken)
-    
-    memory_data = memory_usage(
-        execute_function, 
-        interval=0.1, 
-        include_children=True, 
-        retval=True,
-        max_usage=True  # tracks peak memory usage instead of collecting samples
-    )
+def process_memory():
+    process = psutil.Process()
+    memory_info = process.memory_info()
+    memory_consumed = int(memory_info.rss / 1024)  # memory in KB
+    return memory_consumed
 
-    # returns a tuple: peak memory usage, (function_result, time_taken)
-    peak_memory_usage, (function_result, time_taken) = memory_data
+def time_wrapper(function, *args, **kwargs):
+    start_time = time.time()
+    result = function(*args, **kwargs)
+    end_time = time.time()
+    time_taken = (end_time - start_time) * 1000  # time in milliseconds
+    return result, time_taken
+
+def reset_memory():
+    global memory_history
+    memory_history = []
     
-    return function_result, time_taken, (peak_memory_usage*1024)
+def update_memory():
+    global memory_history
+    memory_history.append(process_memory())
 
 if __name__ == "__main__":
     input_file_path = sys.argv[1]
@@ -182,17 +202,21 @@ if __name__ == "__main__":
         'T': {'A': 94, 'C': 48, 'G': 110, 'T': 0}
     }
     
-    (cost, aligned_str_1, aligned_str_2), time_taken, memory_used = time_memory_wrapper(divide_and_conquer, str_1, str_2, gap_penalty, mismatch_cost)
+    memory_before = process_memory()
+    memory_history.append(memory_before)
+    (cost, aligned_str_1, aligned_str_2), time_taken = time_wrapper(divide_and_conquer, str_1, str_2, gap_penalty, mismatch_cost)
+    
+    peak_memory_usage = max(memory_history) - memory_before
+    reset_memory() 
     
     with open(output_file_path, 'w') as file:
          file.write(f"{int(cost)}\n")
          file.write(f"{aligned_str_1}\n")
          file.write(f"{aligned_str_2}\n")
          file.write(f"{time_taken}\n")
-         file.write(f"{memory_used}")
+         file.write(f"{peak_memory_usage}")
          
     # collect data for generating graphs & write data to file
-    '''
     import os 
     
     directory = 'datapoints'
@@ -206,16 +230,20 @@ if __name__ == "__main__":
         problem_size = len(str_1) + len(str_2)
         problem_sizes.append(problem_size) 
         
-        (cost, aligned_str_1, aligned_str_2), time_taken, memory_used = time_memory_wrapper(divide_and_conquer, str_1, str_2, gap_penalty, mismatch_cost)
+        memory_before = process_memory()
+        memory_history.append(memory_before)
+        (cost, aligned_str_1, aligned_str_2), time_taken = time_wrapper(divide_and_conquer, str_1, str_2, gap_penalty, mismatch_cost)
+        
+        peak_memory_usage = max(memory_history) - memory_before
+        reset_memory() 
         
         time_results.append(time_taken)
-        memory_results.append(memory_used)
+        memory_results.append(peak_memory_usage)
     
     with open('graph_data_efficient.txt', 'w') as file:
         # create two sets of tuples; one for (problem_size, time_taken) and one for (problem_size, memory_used)
         time_results_output = ', '.join(f"({problem_sizes[i]}, {time_results[i]})" for i in range(len(problem_sizes))) + '\n'
-        memory_resuls_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
+        memory_results_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
         
         file.write(time_results_output)
-        file.write(memory_resuls_output)
-    '''
+        file.write(memory_results_output)
