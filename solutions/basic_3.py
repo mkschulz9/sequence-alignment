@@ -207,5 +207,7 @@ if __name__ == "__main__":
         time_results_output = ', '.join(f"({problem_sizes[i]}, {time_results[i]})" for i in range(len(problem_sizes))) + '\n'
         memory_results_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
         
+        print(f'time_results_output {time_results_output}')
         file.write(time_results_output)
+        print(f'memory_results_output {memory_results_output}')
         file.write(memory_results_output)

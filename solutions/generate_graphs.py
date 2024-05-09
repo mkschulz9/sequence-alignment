@@ -10,6 +10,26 @@ def read_data(filepath):
         memory_data = sorted(eval(lines[1].strip()), key=lambda x: x[0])
     return time_data, memory_data
 
+def plot_single_graph(data, ylabel , title, filename):
+    assets_dir = Path('./assets')
+    assets_dir.mkdir(parents=True, exist_ok=True)
+    
+    sizes, measurements = zip(*data)
+    
+    plt.figure(figsize=(10, 5))
+    plt.plot(sizes, measurements, label='Efficient', marker='o')
+    
+    plt.xlabel('Problem Size')
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+   
+    file_path = assets_dir / filename
+    plt.savefig(file_path)
+    plt.close() 
+    return file_path
+
 def plot_graph(data_basic, data_efficient, ylabel, title, filename):
     assets_dir = Path('./assets')
     assets_dir.mkdir(parents=True, exist_ok=True)
@@ -42,4 +62,7 @@ time_graph_path = plot_graph(time_basic, time_efficient, 'Time (milliseconds)', 
 print(f"Time graph saved at: {time_graph_path}")
 
 memory_graph_path = plot_graph(memory_basic, memory_efficient, 'Memory Usage (KBs)', 'Problem Size vs Memory Usage', 'memory_graph.png')
+print(f"Memory graph saved at: {memory_graph_path}")
+
+memory_graph_path = plot_single_graph(memory_efficient, 'Memory Usage (KBs)', 'Problem Size vs Memory Usage', 'memory_graph_efficient_only.png')
 print(f"Memory graph saved at: {memory_graph_path}")
