@@ -178,36 +178,36 @@ if __name__ == "__main__":
         file.write(f"{time_taken}\n")
         file.write(f"{peak_memory_usage}")
 
-    # collect data for generating graphs & write data to file
-    import os
-    directory = 'datapoints'
-    time_results = []
-    memory_results = []
-    problem_sizes = []
+    # # collect data for generating graphs & write data to file
+    # import os
+    # directory = 'datapoints'
+    # time_results = []
+    # memory_results = []
+    # problem_sizes = []
     
-    for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
-        str_1, str_2 = read_and_generate_strings(file_path)
-        problem_size = len(str_1) + len(str_2)
-        problem_sizes.append(problem_size) 
+    # for filename in os.listdir(directory):
+    #     file_path = os.path.join(directory, filename)
+    #     str_1, str_2 = read_and_generate_strings(file_path)
+    #     problem_size = len(str_1) + len(str_2)
+    #     problem_sizes.append(problem_size) 
 
-        memory_before = process_memory()
-        memory_history.append(memory_before)
-        (DP, cost), time_taken = time_wrapper(sequence_alignment, str_1, str_2, gap_penalty, mismatch_cost)        
-        aligned_str_1, aligned_str_2 = top_down_pass(DP, str_1, str_2)
+    #     memory_before = process_memory()
+    #     memory_history.append(memory_before)
+    #     (DP, cost), time_taken = time_wrapper(sequence_alignment, str_1, str_2, gap_penalty, mismatch_cost)        
+    #     aligned_str_1, aligned_str_2 = top_down_pass(DP, str_1, str_2)
         
-        peak_memory_usage = max(memory_history) - memory_before
-        reset_memory() 
+    #     peak_memory_usage = max(memory_history) - memory_before
+    #     reset_memory() 
         
-        time_results.append(time_taken)
-        memory_results.append(peak_memory_usage)
+    #     time_results.append(time_taken)
+    #     memory_results.append(peak_memory_usage)
     
-    with open('graph_data_basic.txt', 'w') as file:
-        # create two sets of tuples; one for (problem_size, time_taken) and one for (problem_size, memory_used)
-        time_results_output = ', '.join(f"({problem_sizes[i]}, {time_results[i]})" for i in range(len(problem_sizes))) + '\n'
-        memory_results_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
+    # with open('graph_data_basic.txt', 'w') as file:
+    #     # create two sets of tuples; one for (problem_size, time_taken) and one for (problem_size, memory_used)
+    #     time_results_output = ', '.join(f"({problem_sizes[i]}, {time_results[i]})" for i in range(len(problem_sizes))) + '\n'
+    #     memory_results_output = ', '.join(f"({problem_sizes[i]}, {memory_results[i]})" for i in range(len(problem_sizes))) + '\n'
         
-        print(f'time_results_output {time_results_output}')
-        file.write(time_results_output)
-        print(f'memory_results_output {memory_results_output}')
-        file.write(memory_results_output)
+    #     print(f'time_results_output {time_results_output}')
+    #     file.write(time_results_output)
+    #     print(f'memory_results_output {memory_results_output}')
+    #     file.write(memory_results_output)
