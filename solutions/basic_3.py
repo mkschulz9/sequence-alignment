@@ -98,19 +98,19 @@ def top_down_pass(DP, str_1, str_2):
             aligned_str_2 += str_2[j-1]
             j = j-1
             
-        update_memory()
+        # update_memory()
 
     # We need to align the strings with "_" once only one string has been fully consumed
     while i > 0:
         aligned_str_1 += str_1[i-1]
         aligned_str_2 += "_"
         i = i-1
-        update_memory()
+        # update_memory()
     while j > 0:
         aligned_str_1 += "_"
         aligned_str_2 += str_2[j-1]
         j = j-1
-        update_memory()
+        # update_memory()
 
     # Reverse the strings and return them
     return aligned_str_1[::-1], aligned_str_2[::-1]

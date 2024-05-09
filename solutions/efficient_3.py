@@ -77,18 +77,18 @@ def top_down_pass(DP, str_1, str_2):
             aligned_str_2 += str_2[j-1]
             j -= 1
             
-        update_memory()
+        # update_memory()
 
     while i > 0:
         aligned_str_1 += str_1[i-1]
         aligned_str_2 += "_"
         i -= 1
-        update_memory()
+        # update_memory()
     while j > 0:
         aligned_str_1 += "_"
         aligned_str_2 += str_2[j-1]
         j -= 1
-        update_memory()
+        # update_memory()
 
     return aligned_str_1[::-1], aligned_str_2[::-1]
 
@@ -96,7 +96,7 @@ def sequence_alignment_basic(str_1, str_2, gap_penalty, mismatch_cost):
     m = len(str_1)
     n = len(str_2)
     DP = zeros(m+1, n+1)
-    update_memory()
+    # update_memory()
     
     for i in range(m+1):
         DP[i][0] = i * gap_penalty
@@ -122,7 +122,7 @@ def build_table(X, Y, gap_penalty, mismatch_cost):
 
     for i in range(1, n+1):
         DP_old[i] = i * gap_penalty
-    update_memory()
+        update_memory()
     
     for i in range(1, m+1):
         DP_cur[0] = i * gap_penalty
@@ -133,7 +133,7 @@ def build_table(X, Y, gap_penalty, mismatch_cost):
                 gap_penalty + DP_old[j],
                 gap_penalty + DP_cur[j-1]
             )
-        update_memory()
+            update_memory()
         DP_old = copy.deepcopy(DP_cur)
         update_memory()
     
