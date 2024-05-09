@@ -122,18 +122,18 @@ def build_table(X, Y, gap_penalty, mismatch_cost):
 
     for i in range(1, n+1):
         DP_old[i] = i * gap_penalty
-        update_memory()
+    # update_memory()
     
     for i in range(1, m+1):
         DP_cur[0] = i * gap_penalty
-        update_memory()
+        # update_memory()
         for j in range(1, n+1):
             DP_cur[j] = min(
                 mismatch_cost[X[i-1]][Y[j-1]] + DP_old[j-1],
                 gap_penalty + DP_old[j],
                 gap_penalty + DP_cur[j-1]
             )
-            update_memory()
+        update_memory()
         DP_old = copy.deepcopy(DP_cur)
         update_memory()
     
